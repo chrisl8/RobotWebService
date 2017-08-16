@@ -267,7 +267,7 @@ app.post('/updateRobotURL', function (req, res) {
 
 // The purpose of this is to grab all of the data from REDIS about the Robot.
 // For custom functions that want it.
-// curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"localURL": "http://192.168.7.115:8080/index2.html", "password": "sueprSecret1785"}' http://localhost:3003/getRobotInfo
+// curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"password": "sueprSecret1785"}' http://localhost:3003/getRobotInfo
 app.post('/getRobotInfo', function (req, res) {
     let password = 'sueprSecret1785';
     if (personalData.cloudServer.password && personalData.cloudServer.password.length > 0) {
