@@ -1,26 +1,25 @@
-var personalData = require('./include/personalData');
-var redis = require('redis'),
-    client = redis.createClient();
-var twilio = require('twilio');
+const personalData = require('./include/personalData');
 // Redis
-var redis = require('redis');
-var redisServer = 'localhost';
-var arloBot = redis.createClient(6379, redisServer, {});
+const redis = require('redis'),
+    client = redis.createClient();
+const twilio = require('twilio');
+const redisServer = 'localhost';
+const arloBot = redis.createClient(6379, redisServer, {});
 // If you want to subscribe on Redis,
 // and also get things,
 // you must have two clients, because a subscribed client
 // cannot issue any commands once it is subscribed.
-var getRedisMessages = redis.createClient(6379, redisServer, {});
+const getRedisMessages = redis.createClient(6379, redisServer, {});
 
 const chatbot = require('./chatbot');
 
-var mongoose = require('mongoose');
-var passport = require('passport');
-var flash = require('connect-flash');
+const mongoose = require('mongoose');
+const passport = require('passport');
+const flash = require('connect-flash');
 
-var morgan = require('morgan');
+const morgan = require('morgan');
 
-var configDB = {
+const configDB = {
     url: 'mongodb://localhost:27017/passport'
 };
 mongoose.connect(configDB.url);
@@ -28,7 +27,7 @@ mongoose.connect(configDB.url);
 require('./config/passport')(passport); // pass passport for configuration
 
 // What if the redis server doesn't exist?
-//var failedRedis = redis.createClient(6379, 'pi', {});
+//const failedRedis = redis.createClient(6379, 'pi', {});
 // Be sure to have an on.('error' handler!
 // Note that it will "back off and retry" doubling the time
 // with each retry.
@@ -50,14 +49,14 @@ getRedisMessages.on('error', function (err) {
 // This could be important if your app only uses Redis "if" it is available,
 // and doesn't require it as a part of its basic function.
 
-var express = require('express');
-var cookieParser = require('cookie-parser');
-var session = require('express-session');
-var RedisStore = require('connect-redis')(session); // Express.js says NOT to use their session store for production.
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const RedisStore = require('connect-redis')(session); // Express.js says NOT to use their session store for production.
 
 // Fancy Express Web Server
 // All of my "static" web pages are in the public folder
-var app = express();
+const app = express();
 app.disable('x-powered-by'); // Do not volunteer system info!
 
 app.use(morgan('dev')); // log every request to the console
@@ -78,7 +77,7 @@ app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
 
 // For parsing Post data
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
     extended: true
@@ -92,12 +91,12 @@ app.use(flash()); // use connect-flash for flash messages stored in session
 require('./app/routes.js')(app, passport); // load our routes and pass in our app and fully configured passport
 //
 
-var robotSubscribers = [];
-var Robot = require('./Robot');
-var port = process.env.PORT || 3003;
-var webServer = app.listen(port);
+const robotSubscribers = [];
+const Robot = require('./Robot');
+const port = process.env.PORT || 3003;
+const webServer = app.listen(port);
 // with Socket.io!
-var socket = require('socket.io').listen(webServer);
+const socket = require('socket.io').listen(webServer);
 
 function sendOldMessages() {
     if (robotSubscribers.length > 0) {
@@ -122,7 +121,7 @@ function onSocketConnection(client) {
 }
 
 function onNewRobot(data) {
-    var newRobot = new Robot(this.id, data);
+    const newRobot = new Robot(this.id, data);
     robotSubscribers.push(newRobot);
     socket.sockets.emit('welcome');
     console.log(this.id, data);
@@ -133,7 +132,7 @@ function onNewRobot(data) {
 function onClientDisconnect() {
     console.log('Robot has disconnected: ' + this.id);
 
-    var robotToRemove = robotById(this.id);
+    const robotToRemove = robotById(this.id);
 
     if (!robotToRemove) {
         console.log('Robot not found.');
@@ -146,8 +145,7 @@ function onClientDisconnect() {
 }
 
 function robotById(id) {
-    var i;
-    for (i = 0; i < robotSubscribers.length; i++) {
+    for (let i = 0; i < robotSubscribers.length; i++) {
         if (robotSubscribers[i].id === id) {
             return robotSubscribers[i];
         }
@@ -159,10 +157,10 @@ app.use(express.static(__dirname + '/public'));
 
 // Redirect to local robot URL
 app.get('/redirect', function (req, res) {
-    var clientResponse = res;
+    const clientResponse = res;
     // Default, hoping you named your computer 'arlobot',
     // and that the name can be resolved on your network.
-    var robotURL = 'http://arlobot:8080/index2.html';
+    let robotURL = 'http://arlobot:8080/index2.html';
     getRedisMessages.get('robotURL', function (err, res) {
         if (err) {
             console.log('Error getting robotURL: ' + err);
@@ -177,7 +175,7 @@ app.get('/redirect', function (req, res) {
     });
 });
 
-// var talkParams = {
+// const talkParams = {
 //     client_name: YOUR_CLIENT_NAME,
 //     sessionid: YOUR_SESSION_ID,
 //     input: YOUR_INPUT,
@@ -208,11 +206,11 @@ app.post('/chat', function (req, res) {
             let thisResponse = 'Sorry, come again?';
             if (chatbotResponse.responses.length > 0) {
                 thisResponse = chatbotResponse.responses[0];
-                let variableArray = thisResponse.match(reBracketText);
-                if (variableArray && variableArray.length > 0) {
+                let constiableArray = thisResponse.match(reBracketText);
+                if (constiableArray && constiableArray.length > 0) {
                     console.log(`Variables: `);
-                    for (let i = 0; i < variableArray.length; i++) {
-                        console.log(variableArray[i].replace(/[\[,\]]/g, ''));
+                    for (let i = 0; i < constiableArray.length; i++) {
+                        console.log(constiableArray[i].replace(/[\[,\]]/g, ''));
                     }
                 }
             }
@@ -231,13 +229,13 @@ app.post('/chat', function (req, res) {
 // TO test with curl: (Set the URL as desired and the server name as desired.
 // curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"localURL": "http://192.168.7.115:8080/index2.html", "password": "sueprSecret1785"}' http://localhost:3003/updateRobotURL
 app.post('/updateRobotURL', function (req, res) {
-    var password = 'sueprSecret1785';
+    let password = 'sueprSecret1785';
     if (personalData.cloudServer.password && personalData.cloudServer.password.length > 0) {
         password = personalData.cloudServer.password;
     }
-    var urlOK = req.body.localURL && req.body.localURL.length > 0;
+    const urlOK = req.body.localURL && req.body.localURL.length > 0;
     // TODO: Use real authentication and SSL if we are ever afraid of this being hijacked.
-    var passwordOK = req.body.password && req.body.password === password;
+    const passwordOK = req.body.password && req.body.password === password;
     if (urlOK && passwordOK) {
         getRedisMessages.set('robotURL', req.body.localURL, function (err, reply) {
             if (err) {
@@ -269,7 +267,7 @@ app.post('/updateRobotURL', function (req, res) {
 
 app.post('/twilio', function (request, response) {
     if (twilio.validateExpressRequest(request, personalData.twilio.auth_token, {url: personalData.twilio.smsWebhook})) {
-        var messageForRedis = {
+        let messageForRedis = {
             smsText: request.body.Body,
             smsTo: request.body.To,
             smsFrom: request.body.From
