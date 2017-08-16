@@ -265,6 +265,39 @@ app.post('/updateRobotURL', function (req, res) {
     }
 });
 
+// The purpose of this is to grab all of the data from REDIS about the Robot.
+// For custom functions that want it.
+// curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"localURL": "http://192.168.7.115:8080/index2.html", "password": "sueprSecret1785"}' http://localhost:3003/getRobotInfo
+app.post('/getRobotInfo', function (req, res) {
+    let password = 'sueprSecret1785';
+    if (personalData.cloudServer.password && personalData.cloudServer.password.length > 0) {
+        password = personalData.cloudServer.password;
+    }
+    const passwordOK = req.body.password && req.body.password === password;
+    if (passwordOK) {
+        const returnData = {};
+        const dataList = ['robotURL', 'robotIP', 'robotHostname'];
+        let remainingToGet = dataList.length;
+        for (let i = 0; i < dataList.length; i++) {
+            (function (i) {
+                getRedisMessages.get(dataList[i], function (err, reply) {
+                    if (!err) {
+                        returnData[dataList[i]] = reply;
+                    }
+                    remainingToGet--;
+                    if (remainingToGet == 0) {
+                        console.log(returnData);
+                        res.send(returnData);
+                    }
+                });
+            })(i);
+        }
+    } else {
+        res.sendStatus(403);
+        console.log('Bad password');
+    }
+});
+
 app.post('/twilio', function (request, response) {
     if (twilio.validateExpressRequest(request, personalData.twilio.auth_token, { url: personalData.twilio.smsWebhook })) {
         let messageForRedis = {
