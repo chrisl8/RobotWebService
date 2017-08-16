@@ -246,7 +246,13 @@ app.post('/updateRobotURL', function (req, res) {
             } else {
                 res.sendStatus(200);
                 console.log(reply);
-
+                // Set other items if they exist:
+                if (req.body.robotIP) {
+                    getRedisMessages.set('robotIP', req.body.robotIP);
+                }
+                if (req.body.robotHostname) {
+                    getRedisMessages.set('robotHostname', req.body.robotHostname);
+                }
             }
         });
         console.log(req.body.localURL);
