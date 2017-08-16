@@ -197,10 +197,10 @@ app.post('/chat', function (req, res) {
         console.log('All ?\'s');
         inputText = '*';
     }
-    chatbot.talk({input: inputText, sessionid: req.body.sessionid}, function (error, chatbotResponse) {
+    chatbot.talk({ input: inputText, sessionid: req.body.sessionid }, function (error, chatbotResponse) {
         if (error || chatbotResponse.status === 'error') {
             console.log(error, chatbotResponse.status);
-            res.send(JSON.stringify({botsay: "Sorry, I'm confused and lost."}));
+            res.send(JSON.stringify({ botsay: "Sorry, I'm confused and lost." }));
         } else {
             console.log(chatbotResponse.responses);
             let thisResponse = 'Sorry, come again?';
@@ -215,7 +215,7 @@ app.post('/chat', function (req, res) {
                 }
             }
             console.log(thisResponse);
-            res.send(JSON.stringify({botsay: thisResponse, sessionid: chatbotResponse.sessionid}));
+            res.send(JSON.stringify({ botsay: thisResponse, sessionid: chatbotResponse.sessionid }));
         }
         if (chatbotResponse.sessionid) {
             fs.appendFile(`chatlogs/${chatbotResponse.sessionid}.log`, `Input: ${req.body.say}\nTwoFlower: ${chatbotResponse.responses[0]}\n`);
@@ -266,7 +266,7 @@ app.post('/updateRobotURL', function (req, res) {
 });
 
 app.post('/twilio', function (request, response) {
-    if (twilio.validateExpressRequest(request, personalData.twilio.auth_token, {url: personalData.twilio.smsWebhook})) {
+    if (twilio.validateExpressRequest(request, personalData.twilio.auth_token, { url: personalData.twilio.smsWebhook })) {
         let messageForRedis = {
             smsText: request.body.Body,
             smsTo: request.body.To,
