@@ -11,20 +11,7 @@ const arloBot = redis.createClient(6379, redisServer, {});
 // cannot issue any commands once it is subscribed.
 const getRedisMessages = redis.createClient(6379, redisServer, {});
 
-const chatbot = require('./chatbot');
-
-const mongoose = require('mongoose');
-const passport = require('passport');
-const flash = require('connect-flash');
-
 const morgan = require('morgan');
-
-const configDB = {
-    url: 'mongodb://localhost:27017/passport'
-};
-mongoose.connect(configDB.url);
-
-require('./config/passport')(passport); // pass passport for configuration
 
 // What if the redis server doesn't exist?
 //const failedRedis = redis.createClient(6379, 'pi', {});
@@ -71,9 +58,6 @@ app.use(session({
 }));
 app.use(cookieParser());
 
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
-
 app.use(express.static(__dirname + '/public'));
 
 // For parsing Post data
@@ -82,14 +66,6 @@ app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
     extended: true
 }));
-
-app.use(passport.initialize());
-app.use(passport.session()); // persistent login sessions
-app.use(flash()); // use connect-flash for flash messages stored in session
-
-// routes ======================================================================
-require('./app/routes.js')(app, passport); // load our routes and pass in our app and fully configured passport
-//
 
 const robotSubscribers = [];
 const Robot = require('./Robot');
@@ -172,54 +148,6 @@ app.get('/redirect', function (req, res) {
         }
         clientResponse.redirect(robotURL);
         //clientResponse.send('<html><link rel="icon" href="/favicon.ico" type="image/x-icon" /><link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" /><body><h1>Twoflower</h1></body></html>');
-    });
-});
-
-// const talkParams = {
-//     client_name: YOUR_CLIENT_NAME,
-//     sessionid: YOUR_SESSION_ID,
-//     input: YOUR_INPUT,
-//     extra: BOOLEAN,
-//     trace: BOOLEAN,
-//     recent: BOOLEAN
-// };
-
-// Chatbot
-const fs = require('fs');
-const reBracketText = /\[(.*?)\]/g;
-app.post('/chat', function (req, res) {
-    console.log(req.body);
-    res.setHeader('Content-Type', 'application/json');
-    // bot.talk(talkParams, function (err, res) {
-    let inputText = req.body.say;
-    let reQuestionMarks = /^\?+$/;
-    if (inputText.match(reQuestionMarks)) {
-        console.log('All ?\'s');
-        inputText = '*';
-    }
-    chatbot.talk({ input: inputText, sessionid: req.body.sessionid }, function (error, chatbotResponse) {
-        if (error || chatbotResponse.status === 'error') {
-            console.log(error, chatbotResponse.status);
-            res.send(JSON.stringify({ botsay: "Sorry, I'm confused and lost." }));
-        } else {
-            console.log(chatbotResponse.responses);
-            let thisResponse = 'Sorry, come again?';
-            if (chatbotResponse.responses.length > 0) {
-                thisResponse = chatbotResponse.responses[0];
-                let constiableArray = thisResponse.match(reBracketText);
-                if (constiableArray && constiableArray.length > 0) {
-                    console.log(`Variables: `);
-                    for (let i = 0; i < constiableArray.length; i++) {
-                        console.log(constiableArray[i].replace(/[\[,\]]/g, ''));
-                    }
-                }
-            }
-            console.log(thisResponse);
-            res.send(JSON.stringify({ botsay: thisResponse, sessionid: chatbotResponse.sessionid }));
-        }
-        if (chatbotResponse.sessionid) {
-            fs.appendFile(`chatlogs/${chatbotResponse.sessionid}.log`, `Input: ${req.body.say}\nTwoFlower: ${chatbotResponse.responses[0]}\n`);
-        }
     });
 });
 
