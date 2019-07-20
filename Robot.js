@@ -1,8 +1,7 @@
-var Robot = function(id, name) {
-    return {
-        id: id,
-        name: name
-    };
-};
+function Robot(id, name) {
+  return {
+    id,
+    name,
+  };
+}
 module.exports = Robot;
-
