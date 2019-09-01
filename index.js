@@ -51,13 +51,17 @@ getRedisMessages.on('error', (err) => {
 
 app.disable('x-powered-by'); // Do not volunteer system info!
 
+const client = redis.createClient({
+  host: 'localhost',
+  prefix: 'robot-site-sessions',
+});
+client.unref();
+client.on('error', console.error);
+
 app.use(morgan('dev')); // log every request to the console
 app.use(
   session({
-    store: new RedisStore({
-      host: 'localhost',
-      prefix: 'robot-site-sessions',
-    }),
+    store: new RedisStore({ client }),
     secret: personalData.cloudServer.sessionSecret,
     saveUninitialized: false, // True for built in, false for redis-connect
     resave: false,
