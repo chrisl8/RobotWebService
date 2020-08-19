@@ -129,12 +129,12 @@ function onClientDisconnect() {
   console.log(robotSubscribers);
 }
 
-function onSocketConnection(client) {
+function onSocketConnection(localClient) {
   console.log('Socket connection started:');
-  // console.log(client);
+  // console.log(localClient);
 
-  client.on('new robot', onNewRobot);
-  client.on('disconnect', onClientDisconnect);
+  localClient.on('new robot', onNewRobot);
+  localClient.on('disconnect', onClientDisconnect);
 }
 
 socket.sockets.on('connection', onSocketConnection);
@@ -228,7 +228,7 @@ app.post('/getRobotInfo', (req, res) => {
         }
         remainingToGet--;
         // eslint-disable-next-line eqeqeq
-        if (remainingToGet == 0) {
+        if (remainingToGet === 0) {
           console.log(returnData);
           res.send(returnData);
         }
