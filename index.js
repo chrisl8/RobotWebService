@@ -7,13 +7,14 @@ const session = require('express-session');
 const redis = require('redis');
 const RedisStore = require('connect-redis')(session); // Express.js says NOT to use their session store for production.
 const morgan = require('morgan');
+const socketIo = require('socket.io');
 
 const port = process.env.PORT || 3003;
 // Fancy Express Web Server
 // All of my "static" web pages are in the public folder
 const app = express();
 const webServer = app.listen(port);
-const socket = require('socket.io').listen(webServer);
+const socket = socketIo(webServer);
 const personalData = require('./include/personalData');
 
 const redisClient = redis.createClient();
