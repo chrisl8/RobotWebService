@@ -167,7 +167,7 @@ app.get('/redirect', (req, result) => {
 // TO test with curl: (Set the URL as desired and the server name as desired.
 // curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"localURL": "http://192.168.7.115:8080/index2.html", "password": "sueprSecret1785"}' http://localhost:3003/updateRobotURL
 app.post('/updateRobotURL', (req, res) => {
-  let password = 'sueprSecret1785';
+  let password = 'superSecret1234';
   if (
     personalData.cloudServer.password &&
     personalData.cloudServer.password.length > 0
@@ -208,7 +208,7 @@ app.post('/updateRobotURL', (req, res) => {
 // For custom functions that want it.
 // curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"password": "sueprSecret1785"}' http://localhost:3003/getRobotInfo
 app.post('/getRobotInfo', (req, res) => {
-  let password = 'sueprSecret1785';
+  let password = 'superSecret1234';
   if (
     personalData.cloudServer.password &&
     personalData.cloudServer.password.length > 0

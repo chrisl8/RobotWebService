@@ -13,14 +13,14 @@
     "express-session": "^1.16.2",
     "morgan": "^1.9.1",
     "redis": "^3.0.2",
-    "socket.io": "^2.2.0",
+    "socket.io": "^3.0.3",
     "twilio": "^3.33.1"
   },
   "devDependencies": {
     "babel-eslint": "10.1.0",
     "eslint": "^7.4.0",
     "eslint-config-airbnb": "^18.2.0",
-    "eslint-config-prettier": "6.11.0",
+    "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-cypress": "^2.11.1",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jasmine": "^4.1.1",
@@ -29,7 +29,7 @@
     "eslint-plugin-react": "^7.20.3",
     "eslint-plugin-react-hooks": "^4.0.8",
     "jasmine": "^3.6.1",
-    "prettier": "2.0.5"
+    "prettier": "^2.2.1"
   },
   "repository": {
     "type": "git",
