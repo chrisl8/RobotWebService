@@ -13,15 +13,13 @@
     "express-session": "^1.16.2",
     "morgan": "^1.9.1",
     "redis": "^3.0.2",
-    "socket.io": "^3.0.3",
+    "socket.io": "^4.0.0",
     "twilio": "^3.33.1"
   },
   "devDependencies": {
-    "babel-eslint": "10.1.0",
     "eslint": "^7.4.0",
     "eslint-config-airbnb": "^18.2.0",
-    "eslint-config-prettier": "^6.15.0",
-    "eslint-plugin-cypress": "^2.11.1",
+    "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jasmine": "^4.1.1",
     "eslint-plugin-jsx-a11y": "^6.3.1",
