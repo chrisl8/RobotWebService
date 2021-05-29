@@ -2,15 +2,11 @@
 
 const fs = require('fs');
 
-const personalDataFile = `${
-  process.env.HOME
-}/.arlobot/personalDataForBehavior.json`;
+const personalDataFile = `${process.env.HOME}/.robotWebService/config.json`;
 // For now just "FAKE" the default file.
 // TODO: Maybe later include it properly
-const defaultDataFile = `${
-  process.env.HOME
-}/.arlobot/personalDataForBehavior.json`;
-const personalData = JSON.parse(fs.readFileSync(personalDataFile, 'utf8'));
+const defaultDataFile = `${process.env.HOME}/.robotWebService/config.json`;
+const configData = JSON.parse(fs.readFileSync(personalDataFile, 'utf8'));
 const defaultData = JSON.parse(fs.readFileSync(defaultDataFile, 'utf8'));
 
 // http://stackoverflow.com/a/130504
@@ -24,8 +20,8 @@ function DumpObjectIndented(obj, indent) {
   for (const property in obj) {
     if (obj.hasOwnProperty(property)) {
       let value = obj[property];
-      if (typeof value == 'string') value = '"' + value + '"';
-      else if (typeof value == 'object') {
+      if (typeof value === 'string') value = `"${value}"`;
+      else if (typeof value === 'object') {
         if (value instanceof Array) {
           // Just let JS convert the Array to a string!
           value = `[ ${value} ]`;
@@ -47,17 +43,17 @@ function DumpObjectIndented(obj, indent) {
 
 let updateNeeded = false;
 for (const prop in defaultData) {
-  if (personalData[prop] === undefined) {
+  if (configData[prop] === undefined) {
     updateNeeded = true;
-    personalData[prop] = defaultData[prop];
+    configData[prop] = defaultData[prop];
   }
 }
 if (updateNeeded) {
-  const newFileOutputData = `{\n${DumpObjectIndented(personalData, '    ')}\n}`;
+  const newFileOutputData = `{\n${DumpObjectIndented(configData, '    ')}\n}`;
   // console.log(newFileOutputData);
   fs.writeFile(personalDataFile, newFileOutputData);
   console.log(`${personalDataFile} has been updated with new settings`);
   console.log('Please check to see if you need to adjust them for your robot!');
 }
 
-module.exports = personalData;
+module.exports = configData;

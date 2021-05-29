@@ -1,3 +1,4 @@
+const { promisify } = require('util');
 const twilio = require('twilio');
 const express = require('express');
 const cookieParser = require('cookie-parser');
@@ -15,17 +16,19 @@ const port = process.env.PORT || 3003;
 const app = express();
 const webServer = app.listen(port);
 const socket = socketIo(webServer);
-const personalData = require('./include/personalData');
+const configData = require('./include/configData');
 
 const redisClient = redis.createClient();
 
 const redisServer = 'localhost';
-const arloBot = redis.createClient(6379, redisServer, {});
+const robotWebService = redis.createClient(6379, redisServer, {});
 // If you want to subscribe on Redis,
 // and also get things,
 // you must have two clients, because a subscribed client
 // cannot issue any commands once it is subscribed.
 const getRedisMessages = redis.createClient(6379, redisServer, {});
+
+const hgetAsync = promisify(getRedisMessages.hget).bind(getRedisMessages);
 
 // What if the redis server doesn't exist?
 // const failedRedis = redis.createClient(6379, 'pi', {});
@@ -40,12 +43,12 @@ const getRedisMessages = redis.createClient(6379, redisServer, {});
 //    console.log('failedRedis connection failed: ' + err);
 // });
 // And just to be safe for our "production" channel too.
-arloBot.on('error', (err) => {
-  console.log(`arloBot Redis connection failed: ${err}`);
+robotWebService.on('error', (err) => {
+  console.log(`robotWebService Redis connection failed: ${err}`);
 });
 // Really, you have to do it for EVERY connection you set up!
 getRedisMessages.on('error', (err) => {
-  console.log(`arloBot Redis connection failed: ${err}`);
+  console.log(`robotWebService Redis connection failed: ${err}`);
 });
 // This could be important if your app only uses Redis "if" it is available,
 // and doesn't require it as a part of its basic function.
@@ -63,7 +66,7 @@ app.use(morgan('dev')); // log every request to the console
 app.use(
   session({
     store: new RedisStore({ client }),
-    secret: personalData.cloudServer.sessionSecret,
+    secret: configData.cloudServer.sessionSecret,
     saveUninitialized: false, // True for built in, false for redis-connect
     resave: false,
   }),
@@ -162,22 +165,65 @@ app.get('/redirect', (req, result) => {
   });
 });
 
+app.get('/redirect/:host', (req, result) => {
+  let destination;
+  getRedisMessages.keys(`hostname:*`, async (err, reply) => {
+    if (err || reply.length < 1) {
+      result.sendStatus(500);
+      console.log(`Error getting list of hosts: ${err}`);
+    } else {
+      const hostList = await Promise.all(
+        reply.map(async (hostname) => {
+          let ip;
+          let webPort;
+          try {
+            ip = await hgetAsync(hostname, 'ip');
+            webPort = await hgetAsync(hostname, 'port');
+          } catch (e) {
+            console.error(`Error getting host ${hostname} data:`);
+            console.error(e);
+          }
+          return { name: hostname.split(':')[1], ip, port: webPort };
+        }),
+      );
+      hostList.forEach((entry) => {
+        if (entry && entry.name && entry.name === req.params.host) {
+          destination = `http://${entry.ip}`;
+          if (entry.port) {
+            destination = `${destination}:${entry.port}`;
+          }
+          destination = `${destination}/`;
+        }
+      });
+
+      if (!destination) {
+        result.sendStatus(404);
+      } else {
+        result.redirect(destination);
+      }
+    }
+  });
+});
+
+const checkBasicPasswordInPostBody = (input) => {
+  let password = 'superSecret1234';
+  if (
+    configData.cloudServer.password &&
+    configData.cloudServer.password.length > 0
+  ) {
+    password = configData.cloudServer.password;
+  }
+  return input && input === password;
+};
+
 // This allows the robot to tell the server in the cloud what his local URL is,
 // Then you can use a public URL, even one written on the robot, for anyone
 // to find the robot, even on a strange network where you do not know what IP it has.
 // TO test with curl: (Set the URL as desired and the server name as desired.
 // curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"localURL": "http://192.168.7.115:8080/index2.html", "password": "sueprSecret1785"}' http://localhost:3003/updateRobotURL
 app.post('/updateRobotURL', (req, res) => {
-  let password = 'superSecret1234';
-  if (
-    personalData.cloudServer.password &&
-    personalData.cloudServer.password.length > 0
-  ) {
-    password = personalData.cloudServer.password;
-  }
   const urlOK = req.body.localURL && req.body.localURL.length > 0;
-  // TODO: Use real authentication and SSL if we are ever afraid of this being hijacked.
-  const passwordOK = req.body.password && req.body.password === password;
+  const passwordOK = checkBasicPasswordInPostBody(req.body.password);
   if (urlOK && passwordOK) {
     getRedisMessages.set('robotURL', req.body.localURL, (err, reply) => {
       if (err) {
@@ -209,14 +255,7 @@ app.post('/updateRobotURL', (req, res) => {
 // For custom functions that want it.
 // curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"password": "sueprSecret1785"}' http://localhost:3003/getRobotInfo
 app.post('/getRobotInfo', (req, res) => {
-  let password = 'superSecret1234';
-  if (
-    personalData.cloudServer.password &&
-    personalData.cloudServer.password.length > 0
-  ) {
-    password = personalData.cloudServer.password;
-  }
-  const passwordOK = req.body.password && req.body.password === password;
+  const passwordOK = checkBasicPasswordInPostBody(req.body.password);
   if (passwordOK) {
     const returnData = {};
     const dataList = ['robotURL', 'robotIP', 'robotHostname'];
@@ -243,8 +282,8 @@ app.post('/getRobotInfo', (req, res) => {
 
 app.post('/twilio', (request, response) => {
   if (
-    twilio.validateExpressRequest(request, personalData.twilio.auth_token, {
-      url: personalData.twilio.smsWebhook,
+    twilio.validateExpressRequest(request, configData.twilio.auth_token, {
+      url: configData.twilio.smsWebhook,
     })
   ) {
     let messageForRedis = {
@@ -270,4 +309,94 @@ app.post('/twilio', (request, response) => {
     console.log('Invalid. Does not appear to be from Twilio!');
     response.sendStatus(403);
   }
+});
+
+// eslint-disable-next-line consistent-return
+app.use((req, res, next) => {
+  // https://stackoverflow.com/a/33905671/4982408
+
+  // parse login and password from headers
+  const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
+  const strauth = Buffer.from(b64auth, 'base64').toString();
+  const splitIndex = strauth.indexOf(':');
+  // const login = strauth.substring(0, splitIndex);
+  const password = strauth.substring(splitIndex + 1);
+
+  let serverPassword = 'superSecret1234';
+  if (
+    configData.cloudServer.password &&
+    configData.cloudServer.password.length > 0
+  ) {
+    serverPassword = configData.cloudServer.password;
+  }
+
+  // Verify login and password are set and correct
+  // FYI: I am ignoring the username, this is absurdly basic.
+  if (password && password === serverPassword) {
+    // Access granted...
+    return next();
+  }
+
+  // Access denied...
+  res.set('WWW-Authenticate', 'Basic realm="401"'); // change this
+  res.status(401).send('Authentication required.'); // custom message
+});
+
+// Routes below here require Basic Auth
+
+// The purpose of this is to add a host name and IP to a list of host names that
+// can be retrieved and/or redirected to.
+// curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"password": "sueprSecret1785"}' http://localhost:3003/addHostname
+app.post('/addHostname', (req, res) => {
+  const hostname = req.body.hostname;
+  const ip = req.body.ip;
+  const webPort = req.body.port;
+  if (hostname && ip) {
+    getRedisMessages.hmset(
+      `hostname:${hostname}`,
+      ['ip', ip, 'port', port],
+      (err, reply) => {
+        if (err) {
+          res.sendStatus(500);
+          console.log(`Error setting hostname ${hostname}/${ip}: ${err}`);
+        } else {
+          res.sendStatus(200);
+          console.log(reply);
+          console.log(
+            `Registered hostname/ip${
+              webPort ? '/port' : ''
+            } entry: ${hostname}/${ip}${webPort ? `/${port}` : ''}`,
+          );
+        }
+      },
+    );
+  } else {
+    res.sendStatus(400);
+    console.log('Missing parameters in body JSON.');
+  }
+});
+
+app.get('/hosts', (req, res) => {
+  getRedisMessages.keys(`hostname:*`, async (err, reply) => {
+    if (err || reply.length < 1) {
+      res.sendStatus(500);
+      console.log(`Error getting list of hosts: ${err}`);
+    } else {
+      const hostList = await Promise.all(
+        reply.map(async (hostname) => {
+          let ip;
+          let webPort;
+          try {
+            ip = await hgetAsync(hostname, 'ip');
+            webPort = await hgetAsync(hostname, 'port');
+          } catch (e) {
+            console.error(`Error getting host ${hostname} data:`);
+            console.error(e);
+          }
+          return { name: hostname.split(':')[1], ip, port: webPort };
+        }),
+      );
+      res.json(hostList);
+    }
+  });
 });
