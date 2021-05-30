@@ -53,17 +53,11 @@ Create a file called ~/.robotWebService/config.json with the following contents:
 ```json
 {
   "cloudServer": {
-    "exists": true,
-    "fqdn": "robot.mydomain.net",
-    "port": 80,
     "password": "superSecret1234",
     "sessionSecret": "RandomStringForSessionID"
   },
   "twilio": {
-    "account_sid": "Twilio Account SID",
     "auth_token": "Twilio Auth Token",
-    "number": "Twilio Number",
-    "my_phone_number": "Number robot should contact",
     "smsWebhook": "https://robot.mydomain.net/twilio"
   }
 }
