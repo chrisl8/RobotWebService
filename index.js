@@ -354,7 +354,7 @@ app.post('/addHostname', (req, res) => {
   if (hostname && ip) {
     getRedisMessages.hmset(
       `hostname:${hostname}`,
-      ['ip', ip, 'port', webPort],
+      ['ip', ip, 'port', webPort || null],
       (err, reply) => {
         if (err) {
           res.sendStatus(500);
