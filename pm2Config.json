@@ -1,8 +1,8 @@
 {
   "apps": [
     {
-      "name": "Arlobot Server",
-      "cwd": "/home/chrisl8/RobotWebService",
+      "name": "Robot Cloud Server",
+      "cwd": "~/RobotWebService",
       "script": "index.js",
       "max_memory_restart": "100M",
       "watch": true,

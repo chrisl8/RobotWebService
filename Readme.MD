@@ -6,6 +6,7 @@ The purpose of this code is to run in the "cloud" on a server, such as on a Digi
 Features:
 1. Accept incoming Twilio messages and relay them to robot when it comes online.  
 2. Provide a consistent web interface URL that will redirect to the robot's current IP address. 
+3. Provide ability to get IP and Host names for adding to /etc/hosts 
 
 This is more of a personal one off thing than code that anyone might use.
 It is a reasonably good example of a cloud Socket.io server with the ability to store and forward messages though.
@@ -63,7 +64,21 @@ Create a file called ~/.robotWebService/config.json with the following contents:
 }
 ```
 
+#### Test run
 ```bash
 npm ci
 node index.js
 ```
+
+#### PM2
+The expected way to run this is to use PM2 to run it continuously. 
+
+`./startpm2.sh`
+
+#### Cron job
+You probably want this to just run on your cloud server 24x7, so it should start in cron.
+
+Add something like this to your crontab:  
+`@reboot /home/chrisl8/RobotWebService/startpm2.sh`  
+
+Be sure to replace my home folder with your home directory.
