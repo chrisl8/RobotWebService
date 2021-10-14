@@ -400,3 +400,6 @@ app.get('/hosts', (req, res) => {
     }
   });
 });
+
+// TODO: Add a web page with links to all of the hosts, for using from a mobile phone or anything where
+//       having one page to go to instead of lots of them would help.
