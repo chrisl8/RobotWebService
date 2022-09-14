@@ -11,15 +11,12 @@
 // Less thinking is better than perfect and/or my preferences.
 
 module.exports = {
-  plugins: ['prettier'],
   extends: ['airbnb', 'prettier'],
-  // extends: ['airbnb'],
   env: {
     es6: true, // Probably not needed, because of babel-eslint
     node: true, // Probably not needed, because of babel-eslint
   },
   rules: {
-    'prettier/prettier': 'error',
     // These are not code style or real errors, just "best practices" that really mean
     // me making wonky code to fit requirements I don't need to fulfill.
     // Someday I'll remove these as I get better. ;)
