@@ -10,21 +10,27 @@
 // because it makes both AirBNB and Prettier happy and is automatic.
 // Less thinking is better than perfect and/or my preferences.
 
+// NOTE: This .eslintrc.cjs file is optimized for a Node.js app. I use slightly different
+// rules for Web front end code.
+
 module.exports = {
-  extends: ['airbnb', 'prettier'],
-  env: {
-    es6: true, // Probably not needed, because of babel-eslint
-    node: true, // Probably not needed, because of babel-eslint
+  // https://gils-blog.tayar.org/posts/using-jsm-esm-in-nodejs-a-practical-guide-part-3/
+  parser: '@babel/eslint-parser', // Required to allow top level await
+  parserOptions: {
+    ecmaVersion: 2020,
+    sourceType: 'module',
+    requireConfigFile: false, // Required to allow files outside of client folder
   },
+  extends: ['airbnb', 'prettier'],
   rules: {
-    // These are not code style or real errors, just "best practices" that really mean
-    // me making wonky code to fit requirements I don't need to fulfill.
-    // Someday I'll remove these as I get better. ;)
     'class-methods-use-this': 0,
-    'no-console': 'off', // As a node.js app, we clearly need console.
+    'no-console': 'off', // Sometimes we want to, okay?
     'no-prototype-builtins': 'off', // This seems like overkill
     'prefer-destructuring': 'off',
     'no-plusplus': 'off',
     'no-restricted-syntax': 'off',
+    // Modules MUST use extensions
+    // https://stackoverflow.com/a/68783000/4982408
+    'import/extensions': ['error', 'always'],
   },
 };

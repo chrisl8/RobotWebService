@@ -4,4 +4,4 @@ function Robot(id, name) {
     name,
   };
 }
-module.exports = Robot;
+export default Robot;

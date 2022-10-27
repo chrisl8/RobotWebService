@@ -19,28 +19,10 @@ If you are using ArloBot, and need a way to communicate with it or find it on a 
 ### Node.js
 I suggest using the latest LTS, and I suggest using [nvm](https://github.com/nvm-sh/nvm) to install it.
 ```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-nvm install --lts
-```
-
-### Redis
-I assume that you are on Ubuntu, or something that uses apt, if not, you probably know more than I do about installing packages on your distro of choice.
-```bash
-sudo apt install redis-server
-sudo vim /etc/redis/redis.conf 
-# CHANGE
-supervised no
-# TO:
-supervised systemd
-:wq
-sudo systemctl restart redis.service
-```
-Test to see that Redis is running
-```bash
-redis-cli
-127.0.0.1:6379> ping
-PONG
-127.0.0.1:6379> quit
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
+nvm install node --latest-npm
+nvm use node
+nvm alias default node
 ```
 
 ### Setup and run RobotWebService

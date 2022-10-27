@@ -1,6 +1,5 @@
-const fetch = require('node-fetch');
 const base64 = require('base-64');
-const configData = require('./include/configData');
+const configData = require('./include/configData.js');
 
 const etcHosts = async () => {
   const url = `${configData.cloudServer.address}hosts`;
