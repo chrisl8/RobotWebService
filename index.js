@@ -486,18 +486,14 @@ app.get('/view-hosts', async (req, res) => {
         destination = `${destination}/`;
       }
       if (destination) {
-        if (hostHTML === '') {
-          hostHTML = `<ul>`;
-        } else {
-          hostHTML = `${hostHTML}<br/>`;
-        }
-        hostHTML = `${hostHTML}<li><a href="${destination}">${destination}</a></li>`;
+        hostHTML = `${hostHTML}<h2>${hostData.name}</h2>`
+        hostHTML = `${hostHTML}<ul>`
+	hostHTML = `${hostHTML}<li>${hostData.ip}</li>`;
+	hostHTML = `${hostHTML}<li><a href="${destination}">${destination}</a></li>`;
+	hostHTML = `${hostHTML}<li><a href="https://twoflower.ekpyroticfrood.net/redirect/${hostData.name}">https://twoflower.ekpyroticfrood.net/redirect/${hostData.name}</a></li>`;
+        hostHTML = `${hostHTML}</ul>`
       }
     });
-    if (hostHTML !== '') {
-      hostHTML = `${hostHTML}</ul>`;
-    }
-    console.log(hostList);
     res.send(`<html><body><h1>Host List</h1>${hostHTML}</body></html>`);
   }
 });
