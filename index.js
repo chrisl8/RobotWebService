@@ -300,6 +300,17 @@ async function sendOldMessages(name) {
   }
 }
 
+const checkBasicPasswordInPostBody = (input) => {
+  let password = 'superSecret1234';
+  if (
+    configData.cloudServer.password &&
+    configData.cloudServer.password.length > 0
+  ) {
+    password = configData.cloudServer.password;
+  }
+  return input && input === password;
+};
+
 async function onNewRobot(data) {
   if (checkBasicPasswordInPostBody(data.password)) {
     const newRobot = new Robot(this.id, data.name);
@@ -313,27 +324,30 @@ async function onNewRobot(data) {
   }
 }
 
-function robotById(id) {
-  for (let i = 0; i < robotSubscribers.length; i++) {
-    if (robotSubscribers[i].id === id) {
-      return robotSubscribers[i];
-    }
+// eslint-disable-next-line consistent-return
+function getMapKeybyValueObjectKey(map, searchKey, searchValue) {
+  for (const [key, value] of map.entries()) {
+    if (value[searchKey] && value[searchKey] === searchValue) return key;
   }
-  return false;
 }
 
 function onClientDisconnect() {
-  console.log(`Robot has disconnected: ${this.id}`);
+  console.log(`Robot has disconnected from Socket ID: ${this.id}`);
 
-  const robotToRemove = robotById(this.id);
+  const entryToRemove = getMapKeybyValueObjectKey(
+    robotSubscribers,
+    'id',
+    this.id,
+  );
 
-  if (!robotToRemove) {
+  if (!entryToRemove) {
     console.log('Robot not found.');
+    console.log(robotSubscribers);
     return;
   }
 
-  robotSubscribers.splice(robotSubscribers.indexOf(robotToRemove), 1);
-
+  robotSubscribers.delete(entryToRemove);
+  console.log(`${robotSubscribers.get(entryToRemove).name} has disconnected.`);
   console.log(robotSubscribers);
 }
 
@@ -387,17 +401,6 @@ app.get('/redirect/:host', async (req, result) => {
     result.redirect(destination);
   }
 });
-
-const checkBasicPasswordInPostBody = (input) => {
-  let password = 'superSecret1234';
-  if (
-    configData.cloudServer.password &&
-    configData.cloudServer.password.length > 0
-  ) {
-    password = configData.cloudServer.password;
-  }
-  return input && input === password;
-};
 
 // This allows the robot to tell the server in the cloud what his local URL is,
 // Then you can use a public URL, even one written on the robot, for anyone
