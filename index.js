@@ -14,7 +14,7 @@ const port = process.env.PORT || 3003;
 // All of my "static" web pages are in the public folder
 const app = express();
 const webServer = app.listen(port);
-const socket = new Server(webServer);
+const io = new Server(webServer);
 
 // https://stackoverflow.com/a/64383997/4982408
 // eslint-disable-next-line no-underscore-dangle
@@ -56,6 +56,15 @@ try {
       smsTo TEXT,
       smsFrom TEXT
     );`;
+  await db.query(sqlCreateTable, []);
+
+  // Creating the generic message table if it does not exist.
+  sqlCreateTable = `CREATE TABLE IF NOT EXISTS messages
+                    (
+                        text TEXT,
+                        \`to\`   TEXT,
+                        \`from\` TEXT
+                    );`;
   await db.query(sqlCreateTable, []);
 
   // Creating the hosts table if it does not exist.
@@ -158,6 +167,20 @@ const addTwilioMessage = async (message) => {
   return result;
 };
 
+const addMessage = async ({ to, message, from }) => {
+  let result = false;
+  try {
+    const sql =
+      'INSERT INTO messages (text, `to`, `from`) VALUES ($1, $2, $3);';
+    await db.query(sql, [message, to, from]);
+    result = true;
+  } catch (e) {
+    console.error(`Error adding Twilio message to database:`);
+    console.error(e.message);
+  }
+  return result;
+};
+
 const getTwilioMessages = async () => {
   let result = null;
   try {
@@ -167,6 +190,20 @@ const getTwilioMessages = async () => {
     result = value;
   } catch (e) {
     console.error(`Error getting Twilio messages from database:`);
+    console.error(e.message);
+  }
+  return result;
+};
+
+const getMessagesTo = async (name) => {
+  let result = null;
+  try {
+    const sql = 'SELECT rowid, * FROM messages WHERE `to` = $1';
+    const value = await db.query(sql, [name]);
+    console.log(value);
+    result = value;
+  } catch (e) {
+    console.error(`Error getting messages from database:`);
     console.error(e.message);
   }
   return result;
@@ -200,36 +237,78 @@ app.use(
   }),
 );
 
-const robotSubscribers = [];
+const delMessage = async (rowid) => {
+  let result = false;
+  try {
+    const sql = 'DELETE FROM messages WHERE rowid = $1;';
+    await db.query(sql, [rowid]);
+    result = true;
+  } catch (e) {
+    console.error(`Error deleting message from database:`);
+    console.error(e.message);
+  }
+  return result;
+};
+
+app.disable('x-powered-by'); // Do not volunteer system info!
+
+app.use(morgan('dev')); // log every request to the console
+app.use(cookieParser());
+
+app.use(express.static(`${__dirname}/public`));
+
+app.use(express.json()); // to support JSON-encoded bodies
+app.use(
+  express.urlencoded({
+    // to support URL-encoded bodies
+    extended: true,
+  }),
+);
+
+const robotSubscribers = new Map();
 
 // with Socket.io!
 
-async function sendOldMessages() {
-  if (robotSubscribers.length > 0) {
-    const messages = await getTwilioMessages();
+function socketEmitToId({ emitToId, socketEvent, data }) {
+  // emit.to doesn't work to send back to the sender, so we need this special function
+  // using io instead of just the socket.
+  // per https://socket.io/docs/v3/emit-cheatsheet/
+  // WARNING: `socket.to(socket.id).emit()` will NOT work, as it will send to everyone in the room
+  // named `socket.id` but the sender. Please use the classic `socket.emit()` instead.
+  io.sockets.to(emitToId).emit(socketEvent, data);
+}
+
+async function sendOldMessages(name) {
+  if (robotSubscribers.has(name)) {
+    const robotSubscriber = robotSubscribers.get(name);
+    const messages = await getMessagesTo(name);
     if (messages && messages.rows && messages.rows.length > 0) {
       await Promise.all(
         messages.rows.map(async (entry) => {
           console.log(entry);
-          socket.sockets.emit('oldMessage', {
-            smsText: entry.smsText,
-            smsTo: entry.smsTo,
-            smsFrom: entry.smsFrom,
+          await socketEmitToId({
+            emitToId: robotSubscriber.id,
+            socketEvent: 'oldMessage',
+            data: {
+              text: entry.text,
+              to: entry.to,
+              from: entry.from,
+            },
           });
-          await delTwilioMessage(entry.rowid);
+          await delMessage(entry.rowid);
         }),
       );
     }
   }
 }
 
-function onNewRobot(data) {
-  const newRobot = new Robot(this.id, data);
-  robotSubscribers.push(newRobot);
-  socket.sockets.emit('welcome');
-  console.log(this.id, data);
+function onNewRobot(name) {
+  const newRobot = new Robot(this.id, name);
+  robotSubscribers.set(name, newRobot);
+  io.sockets.emit('welcome');
+  console.log(this.id, name);
   console.log(robotSubscribers);
-  sendOldMessages();
+  sendOldMessages(name);
 }
 
 function robotById(id) {
@@ -258,13 +337,13 @@ function onClientDisconnect() {
 
 function onSocketConnection(localClient) {
   console.log('Socket connection started:');
-  // console.log(localClient);
+  console.log(localClient);
 
   localClient.on('new robot', onNewRobot);
   localClient.on('disconnect', onClientDisconnect);
 }
 
-socket.sockets.on('connection', onSocketConnection);
+io.sockets.on('connection', onSocketConnection);
 
 app.use(express.static(`${__dirname}/public`));
 
@@ -367,14 +446,25 @@ app.post('/getRobotInfo', async (req, res) => {
   }
 });
 
-app.post('/talkToOrac', async (req, res) => {
+app.post('/message/send', async (req, res) => {
   const passwordOK = checkBasicPasswordInPostBody(req.body.password);
   const data = { ...req.body };
   delete data.password;
-  if (passwordOK) {
-    console.log(data);
-    // TODO: Can we perhaps return something for the shortcut to say/do?
-    res.sendStatus(200);
+  console.log(data);
+  if (passwordOK && data.to && data.from) {
+    if (robotSubscribers.has(data.to)) {
+      const robotSubscriber = robotSubscribers.get(data.to);
+      socketEmitToId({
+        emitToId: robotSubscriber.id,
+        socketEvent: 'newMessage',
+        data,
+      });
+      res.send('Got It!');
+    } else {
+      // Save the message
+      await addMessage({ to: data.to, message: data.text, from: data.from });
+      res.send('Sorry, nobody is home, try again later.');
+    }
   } else {
     res.sendStatus(403);
     console.log('Bad password');
@@ -397,7 +487,7 @@ app.post('/twilio', async (request, response) => {
     response.header('Content-Type', 'text/xml');
     if (robotSubscribers.length > 0) {
       message = JSON.stringify(message);
-      socket.sockets.emit('newMessage', message);
+      io.sockets.emit('newMessage', message);
       response.send('<Response><Sms>Got it!</Sms></Response>');
     } else {
       // Save the message
