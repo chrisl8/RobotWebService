@@ -333,7 +333,10 @@ function onClientDisconnect() {
 }
 
 async function onSocketConnection(localClient) {
-  console.log(`Socket connection started with ID ${this.id}`);
+  const remoteIp =
+    localClient.handshake.headers['x-real-ip'] ||
+    localClient.conn.remoteAddress;
+  console.log(`Socket connection started from ${remoteIp}`);
 
   localClient.on('new robot', onNewRobot);
   localClient.on('disconnect', onClientDisconnect);
