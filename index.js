@@ -200,7 +200,6 @@ const getMessagesTo = async (name) => {
   try {
     const sql = 'SELECT rowid, * FROM messages WHERE `to` = $1';
     const value = await db.query(sql, [name]);
-    console.log(value);
     result = value;
   } catch (e) {
     console.error(`Error getting messages from database:`);
@@ -285,7 +284,6 @@ async function sendOldMessages(name) {
     if (messages && messages.rows && messages.rows.length > 0) {
       await Promise.all(
         messages.rows.map(async (entry) => {
-          console.log(entry);
           await socketEmitToId({
             emitToId: robotSubscriber.id,
             socketEvent: 'oldMessage',
@@ -302,13 +300,12 @@ async function sendOldMessages(name) {
   }
 }
 
-function onNewRobot(name) {
+async function onNewRobot(name) {
   const newRobot = new Robot(this.id, name);
   robotSubscribers.set(name, newRobot);
   io.sockets.emit('welcome');
-  console.log(this.id, name);
-  console.log(robotSubscribers);
-  sendOldMessages(name);
+  console.log(`${name} has connected with Socket ID ${this.id}`);
+  await sendOldMessages(name);
 }
 
 function robotById(id) {
@@ -335,9 +332,8 @@ function onClientDisconnect() {
   console.log(robotSubscribers);
 }
 
-function onSocketConnection(localClient) {
-  console.log('Socket connection started:');
-  console.log(localClient);
+async function onSocketConnection(localClient) {
+  console.log(`Socket connection started with ID ${this.id}`);
 
   localClient.on('new robot', onNewRobot);
   localClient.on('disconnect', onClientDisconnect);
