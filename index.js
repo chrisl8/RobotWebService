@@ -459,7 +459,7 @@ app.post('/message/send', async (req, res) => {
         socketEvent: 'newMessage',
         data,
       });
-      res.send('Got It!');
+      res.sendStatus(200);
     } else {
       // Save the message
       await addMessage({ to: data.to, message: data.text, from: data.from });
