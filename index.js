@@ -346,8 +346,8 @@ function onClientDisconnect() {
     return;
   }
 
-  robotSubscribers.delete(entryToRemove);
   console.log(`${robotSubscribers.get(entryToRemove).name} has disconnected.`);
+  robotSubscribers.delete(entryToRemove);
   console.log(robotSubscribers);
 }
 
