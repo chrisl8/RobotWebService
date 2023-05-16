@@ -371,6 +371,8 @@ app.post('/talkToOrac', async (req, res) => {
   const passwordOK = checkBasicPasswordInPostBody(req.body.password);
   if (passwordOK) {
     console.log(req.body);
+    // TODO: Can we perhaps return something for the shortcut to say/do?
+    res.sendStatus(200);
   } else {
     res.sendStatus(403);
     console.log('Bad password');
