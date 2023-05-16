@@ -300,12 +300,17 @@ async function sendOldMessages(name) {
   }
 }
 
-async function onNewRobot(name) {
-  const newRobot = new Robot(this.id, name);
-  robotSubscribers.set(name, newRobot);
-  io.sockets.emit('welcome');
-  console.log(`${name} has connected with Socket ID ${this.id}`);
-  await sendOldMessages(name);
+async function onNewRobot(data) {
+  if (checkBasicPasswordInPostBody(data.password)) {
+    const newRobot = new Robot(this.id, data.name);
+    robotSubscribers.set(data.name, newRobot);
+    io.sockets.emit('welcome');
+    console.log(`${data.name} has connected with Socket ID ${this.id}`);
+    await sendOldMessages(data.name);
+  } else {
+    console.log(`${data.name} validation failed`);
+    this.disconnect();
+  }
 }
 
 function robotById(id) {
