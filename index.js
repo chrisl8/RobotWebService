@@ -369,8 +369,10 @@ app.post('/getRobotInfo', async (req, res) => {
 
 app.post('/talkToOrac', async (req, res) => {
   const passwordOK = checkBasicPasswordInPostBody(req.body.password);
+  const data = { ...req.body };
+  delete data.password;
   if (passwordOK) {
-    console.log(req.body);
+    console.log(data);
     // TODO: Can we perhaps return something for the shortcut to say/do?
     res.sendStatus(200);
   } else {
