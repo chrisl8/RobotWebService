@@ -349,7 +349,7 @@ app.post('/updateRobotURL', async (req, res) => {
   }
 });
 
-// The purpose of this is to grab all of the data about the Robot.
+// The purpose of this is to grab all the data about the Robot.
 // For custom functions that want it.
 // curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"password": "superSecret1234"}' http://localhost:3003/getRobotInfo
 app.post('/getRobotInfo', async (req, res) => {
@@ -361,6 +361,16 @@ app.post('/getRobotInfo', async (req, res) => {
     returnData.robotHostname = await getKeyValueDb('robotHostname');
     console.log('getRobotInfo:', returnData);
     res.send(returnData);
+  } else {
+    res.sendStatus(403);
+    console.log('Bad password');
+  }
+});
+
+app.post('/talkToOrac', async (req, res) => {
+  const passwordOK = checkBasicPasswordInPostBody(req.body.password);
+  if (passwordOK) {
+    console.log(req.body);
   } else {
     res.sendStatus(403);
     console.log('Bad password');
@@ -486,12 +496,12 @@ app.get('/view-hosts', async (req, res) => {
         destination = `${destination}/`;
       }
       if (destination) {
-        hostHTML = `${hostHTML}<h2>${hostData.name}</h2>`
-        hostHTML = `${hostHTML}<ul>`
-	hostHTML = `${hostHTML}<li>${hostData.ip}</li>`;
-	hostHTML = `${hostHTML}<li><a href="${destination}">${destination}</a></li>`;
-	hostHTML = `${hostHTML}<li><a href="https://twoflower.ekpyroticfrood.net/redirect/${hostData.name}">https://twoflower.ekpyroticfrood.net/redirect/${hostData.name}</a></li>`;
-        hostHTML = `${hostHTML}</ul>`
+        hostHTML = `${hostHTML}<h2>${hostData.name}</h2>`;
+        hostHTML = `${hostHTML}<ul>`;
+        hostHTML = `${hostHTML}<li>${hostData.ip}</li>`;
+        hostHTML = `${hostHTML}<li><a href="${destination}">${destination}</a></li>`;
+        hostHTML = `${hostHTML}<li><a href="https://twoflower.ekpyroticfrood.net/redirect/${hostData.name}">https://twoflower.ekpyroticfrood.net/redirect/${hostData.name}</a></li>`;
+        hostHTML = `${hostHTML}</ul>`;
       }
     });
     res.send(`<html><body><h1>Host List</h1>${hostHTML}</body></html>`);
