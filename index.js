@@ -348,7 +348,6 @@ function onClientDisconnect() {
 
   console.log(`${robotSubscribers.get(entryToRemove).name} has disconnected.`);
   robotSubscribers.delete(entryToRemove);
-  console.log(robotSubscribers);
 }
 
 async function onSocketConnection(localClient) {
@@ -405,7 +404,7 @@ app.get('/redirect/:host', async (req, result) => {
 // This allows the robot to tell the server in the cloud what his local URL is,
 // Then you can use a public URL, even one written on the robot, for anyone
 // to find the robot, even on a strange network where you do not know what IP it has.
-// TO test with curl: (Set the URL as desired and the server name as desired.
+// To test with curl: (Set the URL as desired and the server name as desired.
 // curl -v -H "Accept: application/json" -H "Content-type: application/json" --data '{"localURL": "http://192.168.7.115:8080/index2.html", "password": "superSecret1234"}' http://localhost:3003/updateRobotURL
 app.post('/updateRobotURL', async (req, res) => {
   const urlOK = req.body.localURL && req.body.localURL.length > 0;
@@ -456,7 +455,7 @@ app.post('/getRobotInfo', async (req, res) => {
 app.post('/message/send', async (req, res) => {
   const passwordOK = checkBasicPasswordInPostBody(req.body.password);
   const data = { ...req.body };
-  delete data.password;
+  delete data.password; // Do not forward the password from the body to the recipient.
   console.log(data);
   if (passwordOK && data.to && data.from) {
     if (robotSubscribers.has(data.to)) {
@@ -470,7 +469,9 @@ app.post('/message/send', async (req, res) => {
     } else {
       // Save the message
       await addMessage({ to: data.to, message: data.text, from: data.from });
-      res.send('Sorry, nobody is home, try again later.');
+      res.send(
+        `Sorry, ${data.to} is not online, but we will pass along the message when they return.`,
+      );
     }
   } else {
     res.sendStatus(403);
