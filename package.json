@@ -14,7 +14,7 @@
     "morgan": "^1.9.1",
     "socket.io": "^4.0.0",
     "sqlite3": "^5.1.2",
-    "twilio": "^3.33.1"
+    "twilio": "^4.11.2"
   },
   "devDependencies": {
     "eslint": "^8.22.0",
