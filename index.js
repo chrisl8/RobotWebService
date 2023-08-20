@@ -1,4 +1,3 @@
-import twilio from 'twilio';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
@@ -47,14 +46,6 @@ try {
   let sqlCreateTable = `CREATE TABLE IF NOT EXISTS keyValueStore (
       key TEXT PRIMARY KEY,
       value TEXT
-    );`;
-  await db.query(sqlCreateTable, []);
-
-  // Creating the twilio table if it does not exist.
-  sqlCreateTable = `CREATE TABLE IF NOT EXISTS twilio (
-      smsText TEXT,
-      smsTo TEXT,
-      smsFrom TEXT
     );`;
   await db.query(sqlCreateTable, []);
 
@@ -153,20 +144,6 @@ const getAllHostsDb = async () => {
   return result;
 };
 
-const addTwilioMessage = async (message) => {
-  let result = false;
-  try {
-    const sql =
-      'INSERT INTO twilio (smsText, smsTo, smsFrom) VALUES ($1, $2, $3);';
-    await db.query(sql, [message.smsText, message.smsTo, message.smsFrom]);
-    result = true;
-  } catch (e) {
-    console.error(`Error adding Twilio message to database:`);
-    console.error(e.message);
-  }
-  return result;
-};
-
 const addMessage = async ({ to, message, from }) => {
   let result = false;
   try {
@@ -175,21 +152,7 @@ const addMessage = async ({ to, message, from }) => {
     await db.query(sql, [message, to, from]);
     result = true;
   } catch (e) {
-    console.error(`Error adding Twilio message to database:`);
-    console.error(e.message);
-  }
-  return result;
-};
-
-const getTwilioMessages = async () => {
-  let result = null;
-  try {
-    const sql = 'SELECT rowid, * FROM twilio;';
-    const value = await db.query(sql);
-    console.log(value);
-    result = value;
-  } catch (e) {
-    console.error(`Error getting Twilio messages from database:`);
+    console.error(`Error adding message to database:`);
     console.error(e.message);
   }
   return result;
@@ -203,19 +166,6 @@ const getMessagesTo = async (name) => {
     result = value;
   } catch (e) {
     console.error(`Error getting messages from database:`);
-    console.error(e.message);
-  }
-  return result;
-};
-
-const delTwilioMessage = async (rowid) => {
-  let result = false;
-  try {
-    const sql = 'DELETE FROM twilio WHERE rowid = $1;';
-    await db.query(sql, [rowid]);
-    result = true;
-  } catch (e) {
-    console.error(`Error deleting Twilio message from database:`);
     console.error(e.message);
   }
   return result;
@@ -476,37 +426,6 @@ app.post('/message/send', async (req, res) => {
   } else {
     res.sendStatus(403);
     console.log('Bad password');
-  }
-});
-
-app.post('/twilio', async (request, response) => {
-  if (
-    twilio.validateExpressRequest(request, configData.twilio.auth_token, {
-      url: configData.twilio.smsWebhook,
-    })
-  ) {
-    let message = {
-      smsText: request.body.Body,
-      smsTo: request.body.To,
-      smsFrom: request.body.From,
-    };
-    console.log(message.smsFrom, message.smsText);
-    // Tell Twilio we got the message, and reply to the sender
-    response.header('Content-Type', 'text/xml');
-    if (robotSubscribers.length > 0) {
-      message = JSON.stringify(message);
-      io.sockets.emit('newMessage', message);
-      response.send('<Response><Sms>Got it!</Sms></Response>');
-    } else {
-      // Save the message
-      await addTwilioMessage(message);
-      response.send(
-        '<Response><Sms>Sorry, nobody is home, try again later.</Sms></Response>',
-      );
-    }
-  } else {
-    console.log('Invalid. Does not appear to be from Twilio!');
-    response.sendStatus(403);
   }
 });
 

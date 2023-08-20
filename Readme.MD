@@ -4,7 +4,7 @@ Robot Cloud Server
 The purpose of this code is to run in the "cloud" on a server, such as on a Digital Ocean droplet in order to facilitate the communication between the robot on a network that is either private, or simply unstable.
 
 Features:
-1. Accept incoming Twilio messages and relay them to robot when it comes online.  
+1. Accept incoming messages and relay them to robot when it comes online.  
 2. Provide a consistent web interface URL that will redirect to the robot's current IP address. 
 3. Provide ability to get IP and Host names for adding to /etc/hosts 
 
@@ -38,10 +38,6 @@ Create a file called ~/.robotWebService/config.json with the following contents:
   "cloudServer": {
     "password": "superSecret1234",
     "sessionSecret": "RandomStringForSessionID"
-  },
-  "twilio": {
-    "auth_token": "Twilio Auth Token",
-    "smsWebhook": "https://robot.mydomain.net/twilio"
   }
 }
 ```

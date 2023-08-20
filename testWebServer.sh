@@ -32,11 +32,3 @@ printf "\n\n"
 echo "hosts:"
 curl -H 'Authorization: Basic c3VwZXJTZWNyZXQxMjM0' -H "Accept: application/json" http://localhost:3003/hosts
 printf "\n\n"
-
-echo "twilio:"
-curl -H 'Authorization: Basic c3VwZXJTZWNyZXQxMjM0' -H "Accept: application/json" -H "Content-type: application/json" --data '{"Body": "Hello World!", "To": "You", "From": "+1 316 285 1661"}' http://localhost:3003/twilio
-printf "\n\n"
-
-echo "twilio:"
-curl -H 'Authorization: Basic c3VwZXJTZWNyZXQxMjM0' -H "Accept: application/json" -H "Content-type: application/json" --data '{"Body": "say hi please", "To": "You", "From": "+1 316 285 1661"}' http://localhost:3003/twilio
-printf "\n\n"
